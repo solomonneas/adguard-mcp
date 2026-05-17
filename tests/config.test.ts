@@ -1,5 +1,12 @@
 import { describe, it, expect } from "vitest";
-import { resolveInstances, getInstanceConfig, UnknownInstanceError, NoInstancesError } from "../src/config.ts";
+import {
+  resolveInstances,
+  getInstanceConfig,
+  UnknownInstanceError,
+  NoInstancesError,
+  PartialInstanceConfigError,
+  UnknownDefaultInstanceError,
+} from "../src/config.ts";
 
 describe("resolveInstances", () => {
   it("parses a single primary instance", () => {
@@ -47,7 +54,7 @@ describe("resolveInstances", () => {
     expect(() => resolveInstances({})).toThrow(NoInstancesError);
   });
 
-  it("skips partial instances missing url/username/password", () => {
+  it("throws PartialInstanceConfigError when an instance group is partial", () => {
     const env = {
       ADGUARD_PRIMARY_URL: "http://x",
       ADGUARD_PRIMARY_USERNAME: "u",
@@ -56,8 +63,17 @@ describe("resolveInstances", () => {
       ADGUARD_SECONDARY_USERNAME: "u",
       ADGUARD_SECONDARY_PASSWORD: "p",
     };
-    const cfg = resolveInstances(env);
-    expect(Object.keys(cfg.instances)).toEqual(["secondary"]);
+    expect(() => resolveInstances(env)).toThrow(PartialInstanceConfigError);
+  });
+
+  it("throws UnknownDefaultInstanceError when ADGUARD_DEFAULT_INSTANCE is not a configured instance", () => {
+    const env = {
+      ADGUARD_PRIMARY_URL: "http://x",
+      ADGUARD_PRIMARY_USERNAME: "u",
+      ADGUARD_PRIMARY_PASSWORD: "p",
+      ADGUARD_DEFAULT_INSTANCE: "tertiary",
+    };
+    expect(() => resolveInstances(env)).toThrow(UnknownDefaultInstanceError);
   });
 });
 

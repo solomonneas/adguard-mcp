@@ -23,26 +23,60 @@ export class UnknownInstanceError extends Error {
   }
 }
 
-const URL_RE = /^ADGUARD_([A-Z0-9_]+)_URL$/;
+export class PartialInstanceConfigError extends Error {
+  constructor(name: string, missing: string[]) {
+    super(
+      `Partial AdGuard instance config for '${name}': missing ${missing.join(", ")}. ` +
+        `Set ADGUARD_${name.toUpperCase()}_URL, ADGUARD_${name.toUpperCase()}_USERNAME, and ADGUARD_${name.toUpperCase()}_PASSWORD together, or unset all three.`,
+    );
+    this.name = "PartialInstanceConfigError";
+  }
+}
+
+export class UnknownDefaultInstanceError extends Error {
+  constructor(name: string, known: string[]) {
+    super(
+      `ADGUARD_DEFAULT_INSTANCE is set to '${name}', but no such instance is configured. Known: ${known.join(", ") || "(none)"}.`,
+    );
+    this.name = "UnknownDefaultInstanceError";
+  }
+}
 
 export function resolveInstances(env: Record<string, string | undefined>): ResolvedConfig {
   const instances: Record<string, InstanceConfig> = {};
+  // Collect all candidate instance names by scanning for any of the three suffixes,
+  // so a partial config (e.g. URL+USERNAME set, PASSWORD missing) still surfaces.
+  const candidateNames = new Set<string>();
+  const SUFFIX_RE = /^ADGUARD_([A-Z0-9_]+)_(URL|USERNAME|PASSWORD)$/;
   for (const key of Object.keys(env)) {
-    const m = URL_RE.exec(key);
+    const m = SUFFIX_RE.exec(key);
     if (!m) continue;
-    const upperName = m[1];
+    if (env[key] === undefined || env[key] === "") continue;
+    candidateNames.add(m[1]);
+  }
+  for (const upperName of candidateNames) {
     const name = upperName.toLowerCase();
     const url = env[`ADGUARD_${upperName}_URL`];
     const username = env[`ADGUARD_${upperName}_USERNAME`];
     const password = env[`ADGUARD_${upperName}_PASSWORD`];
-    if (!url || !username || !password) continue;
-    instances[name] = { url, username, password };
+    const missing: string[] = [];
+    if (!url) missing.push("URL");
+    if (!username) missing.push("USERNAME");
+    if (!password) missing.push("PASSWORD");
+    if (missing.length > 0) {
+      throw new PartialInstanceConfigError(name, missing);
+    }
+    instances[name] = { url: url!, username: username!, password: password! };
   }
   if (Object.keys(instances).length === 0) throw new NoInstancesError();
   const explicitDefault = env.ADGUARD_DEFAULT_INSTANCE?.toLowerCase();
-  const defaultInstance = explicitDefault && instances[explicitDefault]
-    ? explicitDefault
-    : (instances.primary ? "primary" : Object.keys(instances).sort()[0]);
+  if (explicitDefault) {
+    if (!instances[explicitDefault]) {
+      throw new UnknownDefaultInstanceError(explicitDefault, Object.keys(instances));
+    }
+    return { instances, defaultInstance: explicitDefault };
+  }
+  const defaultInstance = instances.primary ? "primary" : Object.keys(instances).sort()[0];
   return { instances, defaultInstance };
 }
 
