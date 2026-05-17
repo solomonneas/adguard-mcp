@@ -6,7 +6,7 @@ Mirrors the published pattern of `solomonneas/postiz-mcp`, `solomonneas/jellyfin
 
 ## Problem
 
-AdGuard Home runs on the home network (192.168.1.10 / CT 100 and a second instance at 192.168.1.11). Day-to-day touchpoints are infrequent but repetitive: add a `@@||t.co^` allow exception when a service breaks, audit recent sinkholes after a job-site fails to load, block youtube on a specific client for an evening, subscribe a new filter list. Each of these requires the operator to open the AdGuard web UI on each instance, click through the same flows by hand, and remember to mirror the change across both boxes when the rule should apply everywhere.
+AdGuard Home runs on the home network (one instance at 192.168.1.10 and a second instance at 192.168.1.11). Day-to-day touchpoints are infrequent but repetitive: add a `@@||t.co^` allow exception when a service breaks, audit recent sinkholes after a job-site fails to load, block youtube on a specific client for an evening, subscribe a new filter list. Each of these requires the operator to open the AdGuard web UI on each instance, click through the same flows by hand, and remember to mirror the change across both boxes when the rule should apply everywhere.
 
 There is no agent-driven surface today. Claude cannot answer "block youtube on the family laptop tonight" or "show me the most-blocked domains in the last 6 hours" without the operator copy-pasting from the UI. There is also no programmatic way to enforce a write-safety policy beyond user discipline: a single mis-click in the UI can disable filtering globally.
 
@@ -222,15 +222,3 @@ Operator follow-up after merge:
 - Filter list curation (suggesting good lists).
 - Audit log / change history beyond AGH's built-in query log.
 - A CLI surface in addition to the MCP. If we want one, wrap the same `adguard-client.ts` library in a `bin/adguard` later. v1 ships MCP only.
-
-## Related memory
-
-- Pattern reference: `[[postiz-mcp-shipped]]` (latest MCP template).
-- Test pattern: `[[mcp-tool-handler-test-pattern]]`.
-- Publish flow: `[[clawhub-cli-publish-flow]]`.
-- Auto-redeploy: `[[repo-redeploy-system]]`.
-- README requirements: `[[feedback-mcp-readme-five-clients]]`.
-- Build-but-don't-flip preference: `[[feedback-build-but-dont-flip-preference]]`.
-- AdGuard t.co allowlist (real-world write example): `[[adguard-tco-allowlist-2026-04-16]]`.
-- AdGuard sinkhole audit context: `[[adguard-sinkhole-job-hunt-allowlist]]`.
-- Home-LAN AdGuard placement: `[[infrastructure-proxmox]]`, `[[home-proxmox]]`.
