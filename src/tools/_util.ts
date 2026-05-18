@@ -18,3 +18,20 @@ export function jsonToolResult(payload: unknown) {
 export function makeClientFactory(cfg: ResolvedConfig, build: (ic: ReturnType<typeof getInstanceConfig>) => AdGuardClient): ClientFactory {
   return (instance) => build(getInstanceConfig(cfg, instance));
 }
+
+export function hhmmToMs(value: string | number): number {
+  if (typeof value === "number") {
+    if (!Number.isFinite(value)) throw new Error(`schedule time must be HH:MM or milliseconds, got: ${String(value)}`);
+    return value;
+  }
+  if (typeof value !== "string") {
+    throw new Error(`schedule time must be HH:MM string or milliseconds number, got: ${typeof value}`);
+  }
+  const m = /^(\d{1,2}):(\d{2})$/.exec(value);
+  if (!m) throw new Error(`schedule time must be HH:MM or milliseconds, got: ${value}`);
+  const h = Number(m[1]);
+  const mm = Number(m[2]);
+  if (mm > 59) throw new Error(`invalid HH:MM (minutes > 59): ${value}`);
+  if (h > 24 || (h === 24 && mm > 0)) throw new Error(`invalid HH:MM (max 24:00): ${value}`);
+  return (h * 60 + mm) * 60 * 1000;
+}

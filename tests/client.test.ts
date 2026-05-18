@@ -48,6 +48,17 @@ describe("AdGuardClient", () => {
     expect(JSON.parse(fake.requests[0].body)).toEqual({ rules: ["||example.com^"] });
   });
 
+  it("emits PUT with JSON body", async () => {
+    fake = await startFakeAdGuard([
+      { method: "PUT", path: "/control/blocked_services/update", status: 200, body: {} },
+    ]);
+    const client = new AdGuardClient({ url: fake.baseUrl, username: "u", password: "p" });
+    await client.put("/control/blocked_services/update", { ids: ["youtube"], schedule: null });
+    const req = fake.requests.find((q) => q.method === "PUT")!;
+    expect(req.method).toBe("PUT");
+    expect(JSON.parse(req.body)).toEqual({ ids: ["youtube"], schedule: null });
+  });
+
   it("does not include the basic-auth header in thrown error messages", async () => {
     fake = await startFakeAdGuard([
       { method: "GET", path: "/control/status", status: 401, body: { message: "unauthorized" } },

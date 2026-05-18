@@ -5,7 +5,7 @@ import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprot
 import { resolveInstances, getInstanceConfig, type ResolvedConfig } from "./src/config.ts";
 import { AdGuardClient } from "./src/adguard-client.ts";
 import { registerSecret, redact } from "./src/security.ts";
-import * as toolFactories from "./src/tools/index.ts";
+import { buildAllTools } from "./src/tools/index.ts";
 
 const cfg: ResolvedConfig = resolveInstances(process.env);
 for (const inst of Object.values(cfg.instances)) {
@@ -16,27 +16,11 @@ for (const inst of Object.values(cfg.instances)) {
 
 const getClient = (name?: string) => new AdGuardClient(getInstanceConfig(cfg, name));
 
-const tools = [
-  toolFactories.createAdguardStatusTool(getClient),
-  toolFactories.createAdguardStatsTool(getClient),
-  toolFactories.createAdguardQueryLogTool(getClient),
-  toolFactories.createAdguardListFilterListsTool(getClient),
-  toolFactories.createAdguardListUserRulesTool(getClient),
-  toolFactories.createAdguardListClientsTool(getClient),
-  toolFactories.createAdguardListBlockedServicesCatalogTool(getClient),
-  toolFactories.createAdguardAddUserRuleTool(getClient),
-  toolFactories.createAdguardRemoveUserRuleTool(getClient),
-  toolFactories.createAdguardAddFilterListTool(getClient),
-  toolFactories.createAdguardRemoveFilterListTool(getClient),
-  toolFactories.createAdguardToggleFilterListTool(getClient),
-  toolFactories.createAdguardSetClientBlockedServicesTool(getClient),
-  toolFactories.createAdguardReplaceUserRulesTool(getClient),
-  toolFactories.createAdguardToggleProtectionTool(getClient),
-];
+export const tools = buildAllTools(getClient);
 
 const toolMap = new Map(tools.map((t) => [t.name, t]));
 
-const server = new Server({ name: "adguard-mcp", version: "0.1.0" }, { capabilities: { tools: {} } });
+const server = new Server({ name: "adguard-mcp", version: "0.2.0" }, { capabilities: { tools: {} } });
 
 server.setRequestHandler(ListToolsRequestSchema, async () => ({
   tools: tools.map((t) => ({ name: t.name, description: t.description, inputSchema: t.parameters })),

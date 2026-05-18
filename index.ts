@@ -9,7 +9,7 @@ import { definePluginEntry, type AnyAgentTool } from "openclaw/plugin-sdk/plugin
 import { resolveInstances, getInstanceConfig, type ResolvedConfig } from "./src/config.ts";
 import { AdGuardClient } from "./src/adguard-client.ts";
 import { registerSecret, redact } from "./src/security.ts";
-import * as tools from "./src/tools/index.ts";
+import { buildAllTools } from "./src/tools/index.ts";
 
 interface ToolLike {
   name: string;
@@ -53,20 +53,6 @@ export default definePluginEntry({
     const cfg = resolveInstances(process.env);
     const getClient = makeFactory(cfg);
     const register = (t: ToolLike) => api.registerTool(withRedactedErrors(t) as unknown as AnyAgentTool);
-    register(tools.createAdguardStatusTool(getClient));
-    register(tools.createAdguardStatsTool(getClient));
-    register(tools.createAdguardQueryLogTool(getClient));
-    register(tools.createAdguardListFilterListsTool(getClient));
-    register(tools.createAdguardListUserRulesTool(getClient));
-    register(tools.createAdguardListClientsTool(getClient));
-    register(tools.createAdguardListBlockedServicesCatalogTool(getClient));
-    register(tools.createAdguardAddUserRuleTool(getClient));
-    register(tools.createAdguardRemoveUserRuleTool(getClient));
-    register(tools.createAdguardAddFilterListTool(getClient));
-    register(tools.createAdguardRemoveFilterListTool(getClient));
-    register(tools.createAdguardToggleFilterListTool(getClient));
-    register(tools.createAdguardSetClientBlockedServicesTool(getClient));
-    register(tools.createAdguardReplaceUserRulesTool(getClient));
-    register(tools.createAdguardToggleProtectionTool(getClient));
+    for (const t of buildAllTools(getClient)) register(t as unknown as ToolLike);
   },
 });
