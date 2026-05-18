@@ -1,14 +1,51 @@
 # adguard-mcp
 
-MCP server exposing AdGuard Home read/write tools across one or more instances. Three-tier write gating: reads are open, writes require `confirm: true`, destructive ops require `confirm: true` + `destructive: true`.
+MCP server exposing AdGuard Home read/write tools across one or more instances. 28 tools (11 reads / 12 safe-writes / 5 destructive). Three-tier write gating: reads are open, writes require `confirm: true`, destructive ops require `confirm: true` + `destructive: true`.
 
 ## Tools
 
-**Reads (7):** `adguard_status`, `adguard_stats`, `adguard_query_log`, `adguard_list_filter_lists`, `adguard_list_user_rules`, `adguard_list_clients`, `adguard_list_blocked_services_catalog`.
+**Reads (11):** `adguard_status`, `adguard_stats`, `adguard_query_log`, `adguard_list_filter_lists`, `adguard_list_user_rules`, `adguard_list_clients`, `adguard_list_blocked_services_catalog`, `adguard_check_host`, `adguard_get_blocked_services`, `adguard_get_dns_config`, `adguard_get_safesearch_settings`.
 
-**Safe writes (6, require `confirm: true`):** `adguard_add_user_rule`, `adguard_remove_user_rule`, `adguard_add_filter_list`, `adguard_remove_filter_list`, `adguard_toggle_filter_list`, `adguard_set_client_blocked_services`.
+| Tool | Description |
+|---|---|
+| `adguard_status` | Server status + protection state (`GET /control/status`). |
+| `adguard_stats` | Stats window: top queries, blocked counts, clients (`GET /control/stats`). |
+| `adguard_query_log` | DNS query log slice with filters (`GET /control/querylog`). |
+| `adguard_list_filter_lists` | Subscribed blocklists + allowlists (`GET /control/filtering/status`). |
+| `adguard_list_user_rules` | Custom user rules (`GET /control/filtering/status`). |
+| `adguard_list_clients` | Configured named clients (`GET /control/clients`). |
+| `adguard_list_blocked_services_catalog` | Available service IDs to block (`GET /control/blocked_services/services`). |
+| `adguard_check_host` | Test what AGH would do with a hostname: filter decision, matched rules, CNAME chain, IPs (`GET /control/filtering/check_host`). |
+| `adguard_get_blocked_services` | Global blocked-services list + weekly schedule (`GET /control/blocked_services/get`). |
+| `adguard_get_dns_config` | DNS upstreams, bootstrap, cache, parallel resolution, blocking mode (`GET /control/dns_info`). |
+| `adguard_get_safesearch_settings` | SafeSearch enabled state + per-engine flags (`GET /control/safesearch/status`). |
 
-**Destructive (2, require `confirm: true` + `destructive: true`):** `adguard_replace_user_rules`, `adguard_toggle_protection`.
+**Safe writes (12, require `confirm: true`):** `adguard_add_user_rule`, `adguard_remove_user_rule`, `adguard_add_filter_list`, `adguard_remove_filter_list`, `adguard_toggle_filter_list`, `adguard_set_client_blocked_services`, `adguard_refresh_filter_lists`, `adguard_add_client`, `adguard_update_client`, `adguard_set_blocked_services`, `adguard_toggle_safesearch`, `adguard_toggle_safebrowsing`.
+
+| Tool | Description |
+|---|---|
+| `adguard_add_user_rule` | Append a single user filter rule (`POST /control/filtering/set_rules`). |
+| `adguard_remove_user_rule` | Remove a single user filter rule by exact match (`POST /control/filtering/set_rules`). |
+| `adguard_add_filter_list` | Subscribe to a new blocklist or allowlist URL (`POST /control/filtering/add_url`). |
+| `adguard_remove_filter_list` | Unsubscribe from a filter list by URL (`POST /control/filtering/remove_url`). |
+| `adguard_toggle_filter_list` | Enable or disable a subscribed filter list (`POST /control/filtering/set_url`). |
+| `adguard_set_client_blocked_services` | Set per-client blocked services + schedule (`POST /control/clients/update`). |
+| `adguard_refresh_filter_lists` | Force refresh subscribed filter lists immediately (`POST /control/filtering/refresh`). |
+| `adguard_add_client` | Register a new named client with per-client settings (`POST /control/clients/add`). |
+| `adguard_update_client` | Full update for an existing named client; body is nested `{name, data}` (`POST /control/clients/update`). |
+| `adguard_set_blocked_services` | Set GLOBAL blocked services + optional weekly schedule; accepts HH:MM strings or ms (`PUT /control/blocked_services/update`). |
+| `adguard_toggle_safesearch` | Enable or disable SafeSearch globally with per-engine flags (`PUT /control/safesearch/settings`). |
+| `adguard_toggle_safebrowsing` | Enable or disable AGH SafeBrowsing (`POST /control/safebrowsing/enable` or `/disable`). |
+
+**Destructive (5, require `confirm: true` + `destructive: true`):** `adguard_replace_user_rules`, `adguard_toggle_protection`, `adguard_delete_client`, `adguard_clear_query_log`, `adguard_reset_stats`.
+
+| Tool | Description |
+|---|---|
+| `adguard_replace_user_rules` | Wholesale replace the user rules block (`POST /control/filtering/set_rules`). |
+| `adguard_toggle_protection` | Enable or disable global filtering; off stops ALL blocking (`POST /control/protection`). |
+| `adguard_delete_client` | Remove a configured named client; per-client rules and stats are lost (`POST /control/clients/delete`). |
+| `adguard_clear_query_log` | Wipe the DNS query log (`POST /control/querylog_clear`). |
+| `adguard_reset_stats` | Zero the stats window (`POST /control/stats_reset`). |
 
 ## Configuration
 

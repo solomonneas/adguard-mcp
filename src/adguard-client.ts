@@ -39,6 +39,10 @@ export class AdGuardClient {
     return this.request<T>("POST", path, body);
   }
 
+  async put<T = unknown>(path: string, body?: unknown): Promise<T> {
+    return this.request<T>("PUT", path, body);
+  }
+
   private async request<T>(method: string, path: string, body?: unknown): Promise<T> {
     const url = this.cfg.url.replace(/\/+$/, "") + path;
     const headers: Record<string, string> = { authorization: this.authHeader };

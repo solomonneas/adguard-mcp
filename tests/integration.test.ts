@@ -2,33 +2,21 @@ import { describe, it, expect, afterEach } from "vitest";
 import { startFakeAdGuard, FakeAdGuard } from "./fake-adguard.ts";
 import { AdGuardClient } from "../src/adguard-client.ts";
 import * as toolFactories from "../src/tools/index.ts";
+import { buildAllTools } from "../src/tools/index.ts";
 
 let fake: FakeAdGuard | null = null;
 afterEach(async () => { if (fake) await fake.close(); fake = null; });
 
 describe("integration", () => {
-  it("all 15 tools register with unique names", () => {
+  // Pulls from the same canonical registration array used by both the MCP stdio
+  // entry (mcp-server.ts) and the OpenClaw plugin entry (index.ts). If a new tool
+  // is added to src/tools/index.ts but not to buildAllTools, this test breaks.
+  it("buildAllTools registers all 28 production tools with unique names", () => {
     const dummy = () => new AdGuardClient({ url: "http://x", username: "u", password: "p" });
-    const created = [
-      toolFactories.createAdguardStatusTool(dummy),
-      toolFactories.createAdguardStatsTool(dummy),
-      toolFactories.createAdguardQueryLogTool(dummy),
-      toolFactories.createAdguardListFilterListsTool(dummy),
-      toolFactories.createAdguardListUserRulesTool(dummy),
-      toolFactories.createAdguardListClientsTool(dummy),
-      toolFactories.createAdguardListBlockedServicesCatalogTool(dummy),
-      toolFactories.createAdguardAddUserRuleTool(dummy),
-      toolFactories.createAdguardRemoveUserRuleTool(dummy),
-      toolFactories.createAdguardAddFilterListTool(dummy),
-      toolFactories.createAdguardRemoveFilterListTool(dummy),
-      toolFactories.createAdguardToggleFilterListTool(dummy),
-      toolFactories.createAdguardSetClientBlockedServicesTool(dummy),
-      toolFactories.createAdguardReplaceUserRulesTool(dummy),
-      toolFactories.createAdguardToggleProtectionTool(dummy),
-    ];
-    expect(created).toHaveLength(15);
+    const created = buildAllTools(dummy);
+    expect(created).toHaveLength(28);
     const names = created.map((t) => t.name);
-    expect(new Set(names).size).toBe(15);
+    expect(new Set(names).size).toBe(28);
     for (const n of names) expect(n).toMatch(/^adguard_/);
   });
 
